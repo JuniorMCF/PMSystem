@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorApp">#007f00</color>
+    <color name="colorApp2">#070d4a</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="bueno">#0CBE0C</color>
+    <color name="moderado">#0A1792</color>
+    <color name="malo">#9C0C20</color>
+</resources>
