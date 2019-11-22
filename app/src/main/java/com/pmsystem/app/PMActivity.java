@@ -146,8 +146,8 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
-    private static int FAST_TIME = 5000; //cambiar para modificar el tiempo de update
-    private static int SLOW_TIME = 6000; // el tiempo de arriba + 1000
+    private static int FAST_TIME = 9000; //cambiar para modificar el tiempo de update
+    private static int SLOW_TIME = 10000; // el tiempo de arriba + 1000
     private static PMActivity instance;
 
     private FileWriter writer;
@@ -317,7 +317,7 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
                         getPendingIntent().cancel();
                         NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
                         notificationManager.cancelAll();
-
+                        bluetoothService.stop();
                         finish();
                     }
                 });
@@ -581,7 +581,6 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
 
 
     }
-
 
 
     public void updateData(final Location location) {
