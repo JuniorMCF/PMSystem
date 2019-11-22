@@ -69,7 +69,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -77,12 +80,22 @@ import com.google.android.gms.tasks.Task;
 import com.pmsystem.app.clases.BluetoothService;
 import com.pmsystem.app.clases.Constants;
 import com.pmsystem.app.clases.Data;
+import com.pmsystem.app.clases.DataThingSpeak;
 import com.pmsystem.app.clases.LocationUpdateBroadcast;
+import com.pmsystem.app.services.RetrofitAPI;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PMActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener{
@@ -90,6 +103,15 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     GoogleMap mMap;
 
     Location posActual;
+
+    List<MarkerOptions> markers;
+    Polyline polyline = null;
+    private static final int CHANNEL_ID = 915719;
+    private static final String READ_API_KEY = "1JVT4LXT31WJ7WVX";
+
+    private RetrofitAPI retrofitAPI; // retrofit
+
+
     public static int ACCESS_COARSE_LOCATION_CODE = 3410;
     public static int ACCESS_FINE_LOCATION_CODE = 3310;
     private static final int REQUEST_RESOLVE_ERROR = 555;
@@ -107,6 +129,8 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     private TextView etPM10;
     TextView etNIVEL;
 
+    private List<LatLng> latLngList;
+
     public BluetoothService getBluetoothService() {
         return bluetoothService;
     }
@@ -122,13 +146,14 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
-    private static int FAST_TIME = 3000; //cambiar para modificar el tiempo de update
-    private static int SLOW_TIME = 4000; // el tiempo de arriba + 1000
+    private static int FAST_TIME = 5000; //cambiar para modificar el tiempo de update
+    private static int SLOW_TIME = 6000; // el tiempo de arriba + 1000
     private static PMActivity instance;
 
     private FileWriter writer;
 
     private Button btnIniciar;
+    private Button btnCerrar;
     public static PMActivity getInstance() {
         return instance;
     }
@@ -143,12 +168,19 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
+
         instance = this;
+
+        markers = new ArrayList<>();
+        latLngList = new ArrayList<>();
+
         etPM25 = findViewById(R.id.txtPM2);
         etPM10 = findViewById(R.id.txtPM10);
 
         etNIVEL= findViewById(R.id.txtContanimacion);
         btnIniciar = findViewById(R.id.btnIniciar);
+        btnCerrar = findViewById(R.id.btnCerrar);
 
         myHandler handler = new myHandler(PMActivity.this);
 
@@ -232,7 +264,16 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
                             }
 
                             btnIniciar.setText("Enviar datos");
+                            //polyline.remove();
+                            latLngList.clear();
+                            markers.clear();
+
+                            Toast.makeText(PMActivity.this,"Datos guardados en ThingSpeak",Toast.LENGTH_SHORT).show();
                             //enviar data
+                            //List<DataThingSpeak> sendData = new ArrayList<>();
+                            //sendData = readFile();
+
+
                         }
                     });
                     builder.setNegativeButton("Cancel", null);
@@ -257,6 +298,87 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
 
             }
         });
+
+
+
+        btnCerrar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(PMActivity.this);
+
+                builder.setTitle("Cerrar PMSystem");
+                builder.setMessage("¿Esta seguro que quiere cerrar la aplicación?");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+                builder.setNegativeButton("Cancel", null);
+                builder.create().setOnShowListener( new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface arg0) {
+
+                    }
+                });
+
+                builder.show();
+
+            }
+        });
+
+
+    }
+
+
+    // LECTURA DE FICHERO INTERNO
+   /* private List<DataThingSpeak> readFile()
+    {
+        List<DataThingSpeak> myData = new ArrayList<>();
+        File myExternalFile = new File("/data/data/com.pmsystem.app/data/","archivo.txt");
+        try {
+            FileInputStream fis = new FileInputStream(myExternalFile);
+            DataInputStream in = new DataInputStream(fis);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+
+            String strLine;
+
+            String[] split;
+
+            while ((strLine = br.readLine()) != null) {
+                DataThingSpeak data = new DataThingSpeak();
+                split =  strLine.split(",");
+                data.setLatitud(split[0]);
+                data.setLongitud(split[1]);
+                data.setPm25(split[2]);
+                data.setPm10(split[3]);
+                data.setMac(split[4]);
+
+                myData.add(data);
+            }
+            br.close();
+            in.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return myData;
+    }
+*/
+    public void sendingData(HashMap<String,String> data){
+        retrofitAPI =  RetrofitAPI.getInstance();
+        Call<List<DataThingSpeak>> getData = retrofitAPI.getThingspeakService().getData(READ_API_KEY,data);
+            getData.enqueue(new Callback<List<DataThingSpeak>>() {
+                @Override
+                public void onResponse(Call<List<DataThingSpeak>> call, Response<List<DataThingSpeak>> response) {
+                    Log.d("aca","data enviada");
+                }
+
+                @Override
+                public void onFailure(Call<List<DataThingSpeak>> call, Throwable t) {
+                    Log.d("aca","sending data fail");
+                }
+            });
     }
 
     private static class myHandler extends Handler {
@@ -311,21 +433,57 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
                                 activity.etNIVEL.setTextColor(Color.GREEN);
                                 activity.etNIVEL.setText("BUENO");
                                 activity.mMap.clear();
-                                activity.mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("Actual").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_green)));
+                                activity.markers.add(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("bueno").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_green)));
+                                activity.latLngList.add(new LatLng(location.getLatitude(),location.getLongitude()));
+                                for(MarkerOptions marker : activity.markers){
+                                    activity.mMap.addMarker(marker);
+                                    if(activity.polyline!=null){
+                                        activity.polyline.remove();
+                                    }
+                                    PolylineOptions polylineOptions = new PolylineOptions().addAll(activity.latLngList).color(Color.RED).width(5f).clickable(true);
+                                    activity.polyline = activity.mMap.addPolyline(polylineOptions);
+
+                                }
+
 
                             }else if ((pm10 >= 255 && pm10 <= 354) || (pm25 >= 55.5 || pm25 <= 150.4)){
                                 //bandera azul
                                 activity.etNIVEL.setTextColor(Color.BLUE);
                                 activity.etNIVEL.setText("MODERADO");
                                 activity.mMap.clear();
-                                activity.mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("Actual").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_blue)));
+
+                                activity.markers.add(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("moderado").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_blue)));
+
+                                activity.latLngList.add(new LatLng(location.getLatitude(),location.getLongitude()));
+                                for(MarkerOptions marker : activity.markers){
+                                    activity.mMap.addMarker(marker);
+                                    if(activity.polyline!=null){
+                                        activity.polyline.remove();
+                                    }
+                                    PolylineOptions polylineOptions = new PolylineOptions().addAll(activity.latLngList).color(Color.RED).width(5f).clickable(true);
+                                    activity.polyline = activity.mMap.addPolyline(polylineOptions);
+
+                                }
+                                //activity.mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("Actual").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_blue)));
 
                             }else if ((pm10 >= 355 && pm10 <= 604) || (pm25 >= 150.5 && pm25 <= 500.4) ){
                                 //bandera roja
                                 activity.etNIVEL.setTextColor(Color.RED);
                                 activity.etNIVEL.setText("MALA");
                                 activity.mMap.clear();
-                                activity.mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("Actual").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_red)));
+                                activity.markers.add(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("malo").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_red)));
+
+                                activity.latLngList.add(new LatLng(location.getLatitude(),location.getLongitude()));
+                                for(MarkerOptions marker : activity.markers){
+                                    activity.mMap.addMarker(marker);
+                                    if(activity.polyline!=null){
+                                        activity.polyline.remove();
+                                    }
+                                    PolylineOptions polylineOptions = new PolylineOptions().addAll(activity.latLngList).color(Color.RED).width(5f).clickable(true);
+                                    activity.polyline = activity.mMap.addPolyline(polylineOptions);
+
+                                }
+                                //activity.mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude())).title("Actual").icon(activity.bitmapDescriptorFromVector(activity,R.drawable.ic_flag_red)));
 
                             }
 
@@ -418,39 +576,51 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     }
 
 
+
     public void updateData(final Location location) {
         Log.d("listo","segundo plano location = " + location);
         posActual = location;
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()),14.5f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),location.getLongitude()),18.0f));
         byte[] myvar = "1".getBytes();
         bluetoothService.write(myvar);
 
 
-        try {
-            File root = Environment
-                    .getDataDirectory();
-            File dir = new File(root.getAbsoluteFile() + "/data/com.pmsystem.app/data");
-            if (!dir.exists()) {
-                dir.mkdirs();
-                //existeDir = true;
-            }
+        /*File root = Environment
+                .getDataDirectory();
+        File dir = new File(root.getAbsoluteFile() + "/data/com.pmsystem.app/data");
+        if (!dir.exists()) {
+            dir.mkdirs();
+            //existeDir = true;
+        }
 
-            File file = new File(dir, "archivo" + ".txt");
 
-            String header = location.getLatitude()+","+location.getLongitude()+","+etPM25.getText()+","+etPM10.getText()+","+mDevice.getAddress()+"\n";
 
+        File file = new File(dir, "archivo" + ".txt");
+        */
+        String header = location.getLatitude()+","+location.getLongitude()+","+etPM25.getText()+","+etPM10.getText()+","+mDevice.getAddress()+"\n";
+
+
+        HashMap<String,String> map = new HashMap<>();
+        map.put("field1",""+location.getLatitude());
+        map.put("field2",""+location.getLongitude());
+        map.put("field3",""+etPM25.getText());
+        map.put("field4",""+etPM10.getText());
+        map.put("field5",""+mDevice.getAddress());
+
+        try{
+            sendingData(map);
+        }catch (Exception e){
+            Log.d("error",e.getMessage());
+        }
+ /*
             writer = new FileWriter(file, true);
             writer.append(header);
 
             writer.flush();
 
-
-            // Log.d("aca", "Saved " + points.size() + " points.");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            Log.d("aca", "Error Writting Path", e);
-        }
-          }
+            */
+        // Log.d("aca", "Saved " + points.size() + " points.");
+    }
 
     private void createNOtification(){
         Intent intent2 = new Intent(this, PMActivity.class);
@@ -596,8 +766,10 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
                                         if (currentLocation != null) {
                                             // mMap.clear();
                                             LatLng inicio = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                                            (PMActivity.this).latLngList.add(inicio);
                                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(inicio, 15));
                                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(inicio,15));
+
                                             posActual = new Location("");
                                             posActual.setLatitude(inicio.latitude);
                                             posActual.setLongitude(inicio.longitude);
@@ -860,7 +1032,7 @@ public class PMActivity extends FragmentActivity implements OnMapReadyCallback, 
     protected void onStop() {
         super.onStop();
         if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
+            //mGoogleApiClient.disconnect();
         }
     }
 

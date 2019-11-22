@@ -108,7 +108,6 @@
                     android:id="@+id/txtContanimacion"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:text="Bueno"
                     android:textAlignment="center"
                     android:textSize="@dimen/_16ssp"
                     android:textStyle="bold"
@@ -187,6 +186,18 @@
                 android:src="@drawable/logo_monitoreo"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <Button
+                android:id="@+id/btnCerrar"
+                android:layout_width="@dimen/_40sdp"
+                android:layout_height="@dimen/_40sdp"
+                android:background="@drawable/ic_exit_to_app_black_24dp"
+                app:layout_constraintBottom_toTopOf="@+id/view"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.0" />

@@ -1,41 +1,30 @@
 package com.pmsystem.app;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
 import android.app.Dialog;
-import android.app.MediaRouteButton;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Window;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 
 import com.pmsystem.app.adapters.BluetoothListAdapter;
-import com.pmsystem.app.adapters.BluetoothListPairedAdapter;
 import com.pmsystem.app.clases.Constants;
-import com.pmsystem.app.clases.Devices;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +36,6 @@ public class BluetoothActivity extends AppCompatActivity {
     private BluetoothListAdapter bluetoothListAdapter;
     private RecyclerView rvDisponibles;
 
-    private BluetoothListPairedAdapter bluetoothListPairedAdapter;
-    private RecyclerView rvPaireds;
 
     private List<BluetoothDevice> btDevicesList;
     private BluetoothAdapter bluetoothAdapter;
@@ -59,7 +46,6 @@ public class BluetoothActivity extends AppCompatActivity {
 
     //variables de la vista principal
     private TextView txtTitle;
-    private TextView txtTitle2;
 
 
     public BluetoothAdapter getBluetoothAdapter() {
